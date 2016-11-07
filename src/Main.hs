@@ -32,6 +32,7 @@ runServer (sock, addr) = do
   let stripedMessage = strip $ pack message
   let response = respondToMessage sock addr stripedMessage
   send sock response
+  runServer (sock, addr)
 
 respondToMessage :: Socket -> SockAddr -> Text -> String
 respondToMessage sock addr "HELO text" = do
