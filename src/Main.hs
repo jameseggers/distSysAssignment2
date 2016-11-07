@@ -2,9 +2,6 @@
 
 module Main where
 
--- import Network.Socket hiding (send, sendTo, recv, recvFrom)
--- import Network.Socket.ByteString (send, recv)
--- import qualified Data.ByteString.Char8 as B8
 import Network.Socket
 import Data.Text hiding (head, tail, splitOn)
 import Data.List.Split
@@ -26,19 +23,19 @@ waitForConnection sock = do
   runServer conn
   waitForConnection sock
 
-runServer :: (Socket, SockAddr) -> IO Int
+runServer :: (Socket, SockAddr) -> IO ()
 runServer (sock, addr) = do
   message <- recv sock 4096
   let stripedMessage = strip $ pack message
-  let response = respondToMessage sock addr stripedMessage
+  let response = respondToMessage addr stripedMessage
   send sock response
-  runServer (sock, addr)
+  if response == "die" then sClose sock else runServer (sock, addr)
 
-respondToMessage :: Socket -> SockAddr -> Text -> String
-respondToMessage sock addr "HELO text" = do
+respondToMessage :: SockAddr -> Text -> String
+respondToMessage addr "HELO text" = do
   unpack "HELO text\nIP:"++justAddress++"\nPort:"++justPort++"\nStudentID:13330379\n"
   where address = (show addr)
         splitedAddress = splitOn ":" address
         justAddress = head splitedAddress
         justPort = splitedAddress !! 1
-respondToMessage sock addr "KILL_SERVICE" = "die"
+respondToMessage _ "KILL_SERVICE" = "die"
