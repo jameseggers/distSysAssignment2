@@ -3,25 +3,33 @@
 module Main where
 
 import Network.Socket
-import Data.Text hiding (head, tail, splitOn)
+import Data.Text hiding (head, tail, splitOn, length)
 import Data.List.Split
+import Control.Concurrent
 
 main :: IO ()
 main = withSocketsDo $ do
+  let numberOfActiveThreads = 0
+  let maximumThreads = 25
   sock <- socket socketFamily socketType defaultProtocol
   setSocketOption sock ReuseAddr 1
   bind sock address
   listen sock 2
-  waitForConnection sock
+  waitForConnection sock [] maximumThreads
   where socketType = Stream
         socketFamily = AF_INET
         address = SockAddrInet 4243 iNADDR_ANY
 
-waitForConnection :: Socket -> IO ()
-waitForConnection sock = do
+waitForConnection :: Socket -> [Socket] -> Int -> IO ()
+waitForConnection sock runningSockets maximumNumberOfThreads = do
   conn <- accept sock
-  runServer conn
-  waitForConnection sock
+  let newRunningSockets = addNewSocket conn runningSockets maximumNumberOfThreads
+  waitForConnection sock newRunningSockets maximumNumberOfThreads
+
+addNewSocket :: (Socket, SockAddr) -> [Socket] -> Int -> [Socket]
+addNewSocket (sock, _) sockets maxSockets
+  | (length sockets) == maxSockets = sockets
+  | otherwise = sockets ++ [sock]
 
 runServer :: (Socket, SockAddr) -> IO ()
 runServer (sock, addr) = do
