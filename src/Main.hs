@@ -10,7 +10,7 @@ import Control.Concurrent
 main :: IO ()
 main = withSocketsDo $ do
   let numberOfActiveThreads = 0
-  let maximumThreads = 25
+  let maximumThreads = 2
   sock <- socket socketFamily socketType defaultProtocol
   setSocketOption sock ReuseAddr 1
   bind sock address
@@ -23,8 +23,21 @@ main = withSocketsDo $ do
 waitForConnection :: Socket -> [Socket] -> Int -> IO ()
 waitForConnection sock runningSockets maximumNumberOfThreads = do
   conn <- accept sock
-  let newRunningSockets = addNewSocket conn runningSockets maximumNumberOfThreads
-  waitForConnection sock newRunningSockets maximumNumberOfThreads
+  activeSockets <- numberOfActiveSockets runningSockets 0
+  threadId <- forkIO (runServer conn)
+  let runningSocketsWithNewSocket = addNewSocket conn runningSockets maximumNumberOfThreads
+  if (activeSockets >= maximumNumberOfThreads)
+    then (killThread threadId) >> sClose (fst conn)
+    else return ()
+  waitForConnection sock runningSocketsWithNewSocket maximumNumberOfThreads
+
+numberOfActiveSockets :: [Socket] -> Int -> IO Int
+numberOfActiveSockets [] runningSockets = return runningSockets
+numberOfActiveSockets (sock:socks) runningSockets = do
+  isSockWritable <- isWritable sock
+  if isSockWritable == True
+    then numberOfActiveSockets socks (runningSockets + 1)
+    else numberOfActiveSockets socks runningSockets
 
 addNewSocket :: (Socket, SockAddr) -> [Socket] -> Int -> [Socket]
 addNewSocket (sock, _) sockets maxSockets
