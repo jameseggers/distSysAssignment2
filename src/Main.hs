@@ -61,7 +61,7 @@ respondToMessage :: SockAddr -> String -> Text -> String
 respondToMessage addr ipAddress message
   | (Data.List.isPrefixOf "KILL_SERVICE" stringMessage) = "die"
   | (Data.List.isPrefixOf "HELO" stringMessage) = stringMessage++"\nIP:178.62.42.127\nPort:"++justPort++"\nStudentID:13330379\n"
-  | otherwise = "Recognised commands: HELO text or KILL_SERVICE"
+  | otherwise = ""
   where address = (show addr)
         splitedAddress = splitOn ":" address
         justPort = "4243"
