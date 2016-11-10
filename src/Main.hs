@@ -49,6 +49,7 @@ addNewSocket (sock, _) sockets maxSockets
 runServer :: (Socket, SockAddr) -> IO ()
 runServer (sock, addr) = do
   message <- recv sock 4096
+  putStrLn message
   let stripedMessage = strip $ pack message
   ns <- getNetworkInterfaces
   let ipAddress = show $ ipv4 (head ns)
@@ -59,9 +60,10 @@ runServer (sock, addr) = do
 respondToMessage :: SockAddr -> String -> Text -> String
 respondToMessage addr ipAddress message
   | (Data.List.isPrefixOf "HELO" stringMessage) = do
-    stringMessage++"\nIP:"++ipAddress++"\nPort:"++justPort++"\nStudentID:13330379\n"
+    stringMessage++"\nIP:178.62.42.127\nPort:"++justPort++"\nStudentID:13330379\n"
   where address = (show addr)
         splitedAddress = splitOn ":" address
         justPort = "4243"
         stringMessage = unpack message
 respondToMessage _ _ "KILL_SERVICE" = "die"
+respondToMessage _ _ _ = "Recognised commands: HELO text or KILL_SERVICE"
