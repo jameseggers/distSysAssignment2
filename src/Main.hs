@@ -12,7 +12,7 @@ import Network.Info
 main :: IO ()
 main = withSocketsDo $ do
   let numberOfActiveThreads = 0
-  let maximumThreads = 2
+  let maximumThreads = 25
   sock <- socket socketFamily socketType defaultProtocol
   setSocketOption sock ReuseAddr 1
   bind sock address
