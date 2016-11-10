@@ -54,7 +54,7 @@ runServer (sock, addr) = do
   ns <- getNetworkInterfaces
   let ipAddress = show $ ipv4 (head ns)
   let response = respondToMessage addr ipAddress stripedMessage
-  send sock response
+  if response /= "die" then send sock response else return 0
   if response == "die" then sClose sock else runServer (sock, addr)
 
 respondToMessage :: SockAddr -> String -> Text -> String
