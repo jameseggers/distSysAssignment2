@@ -5,7 +5,9 @@ module Main where
 import Network.Socket
 import Data.Text hiding (head, tail, splitOn, length)
 import Data.List.Split
+import Data.List
 import Control.Concurrent
+import Network.Info
 
 main :: IO ()
 main = withSocketsDo $ do
@@ -48,15 +50,17 @@ runServer :: (Socket, SockAddr) -> IO ()
 runServer (sock, addr) = do
   message <- recv sock 4096
   let stripedMessage = strip $ pack message
-  let response = respondToMessage addr stripedMessage
+  ns <- getNetworkInterfaces
+  let ipAddress = show $ ipv4 (head ns)
+  let response = respondToMessage addr ipAddress stripedMessage
   send sock response
   if response == "die" then sClose sock else runServer (sock, addr)
 
-respondToMessage :: SockAddr -> Text -> String
-respondToMessage addr "HELO text" = do
-  unpack "HELO text\nIP:"++justAddress++"\nPort:"++justPort++"\nStudentID:13330379\n"
+respondToMessage :: SockAddr -> String -> Text -> String
+respondToMessage addr ipAddress message
+  | (Data.List.isPrefixOf "HELO" (unpack message)) = do
+    unpack (unpack message)++"\nIP:"++ipAddress++"\nPort:"++justPort++"\nStudentID:13330379\n"
   where address = (show addr)
         splitedAddress = splitOn ":" address
-        justAddress = head splitedAddress
-        justPort = splitedAddress !! 1
-respondToMessage _ "KILL_SERVICE" = "die"
+        justPort = "4243"
+respondToMessage _ _ "KILL_SERVICE" = "die"
