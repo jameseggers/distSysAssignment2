@@ -59,11 +59,10 @@ runServer (sock, addr) = do
 
 respondToMessage :: SockAddr -> String -> Text -> String
 respondToMessage addr ipAddress message
-  | (Data.List.isPrefixOf "HELO" stringMessage) = do
-    stringMessage++"\nIP:178.62.42.127\nPort:"++justPort++"\nStudentID:13330379\n"
+  | (Data.List.isPrefixOf "KILL_SERVICE" stringMessage) = "die"
+  | (Data.List.isPrefixOf "HELO" stringMessage) = stringMessage++"\nIP:178.62.42.127\nPort:"++justPort++"\nStudentID:13330379\n"
+  | otherwise = "Recognised commands: HELO text or KILL_SERVICE"
   where address = (show addr)
         splitedAddress = splitOn ":" address
         justPort = "4243"
         stringMessage = unpack message
-respondToMessage _ _ "KILL_SERVICE" = "die"
-respondToMessage _ _ _ = "Recognised commands: HELO text or KILL_SERVICE"
