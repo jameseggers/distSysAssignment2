@@ -58,9 +58,10 @@ runServer (sock, addr) = do
 
 respondToMessage :: SockAddr -> String -> Text -> String
 respondToMessage addr ipAddress message
-  | (Data.List.isPrefixOf "HELO" (unpack message)) = do
-    unpack (unpack message)++"\nIP:"++ipAddress++"\nPort:"++justPort++"\nStudentID:13330379\n"
+  | (Data.List.isPrefixOf "HELO" stringMessage) = do
+    stringMessage++"\nIP:"++ipAddress++"\nPort:"++justPort++"\nStudentID:13330379\n"
   where address = (show addr)
         splitedAddress = splitOn ":" address
         justPort = "4243"
+        stringMessage = unpack message
 respondToMessage _ _ "KILL_SERVICE" = "die"
